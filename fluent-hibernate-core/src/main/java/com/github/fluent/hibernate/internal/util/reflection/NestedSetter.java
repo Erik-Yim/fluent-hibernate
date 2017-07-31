@@ -72,12 +72,66 @@ public final class NestedSetter {
     public static NestedSetter create(Class<?> theClass, String propertyName) {
         NestedSetter result = getSetterOrNull(theClass, propertyName);
         if (result == null) {
-            throw new PropertyAccessException(null,
-                    "Could not find a setter for a nested property.", true, theClass, propertyName);
+            System.out.println("can't create " + propertyName + ", ingore this property");
+
+//            throw new PropertyAccessException(null,
+//                    "Could not find a setter for a nested property.", true, theClass, propertyName);
         }
         return result;
     }
 
+    private static NestedSetter getSetterOrNull(Class<?> theClass, String propertyName) {
+        if (theClass == Object.class || theClass == null || propertyName == null) {
+            return null;
+        }
+
+        String[] propertyParts = ReflectionUtils.getPropertyParts(propertyName);
+
+        int nestedCount = propertyParts.length;
+
+        Method[] getMethods = new Method[nestedCount - 1];
+        Method[] setMethods = new Method[nestedCount - 1];
+
+        Class<?> currentClass = theClass;
+        for (int i = 0; i < nestedCount - 1; i++) {
+            Method getter = ReflectionUtils.getClassGetter(currentClass, propertyParts[i]);
+//          如果sql查询的字段在pojo中无法匹配则忽略这次请求，
+            if (getter == null) {
+
+                System.out.println("can't create getter method " + propertyName + ", ingore this property");
+                return null;
+//                throw new PropertyAccessException(null,
+//                        String.format(
+//                                "Intermediate getter property not found for nesetd property `%s`",
+//                                propertyName),
+//                        false, theClass, propertyParts[i]);
+            }
+
+            getMethods[i] = getter;
+            setMethods[i] = ReflectionUtils.getClassSetter(currentClass, propertyParts[i], getter);
+
+            currentClass = getMethods[i].getReturnType();
+        }
+
+        Method method = setterMethod(currentClass, propertyParts[nestedCount - 1]);
+        if (method != null) {
+            ReflectionUtils.makePublic(method);
+            return new NestedSetter(theClass, getMethods, setMethods, method, propertyName);
+        }
+
+        NestedSetter setter = getSetterOrNull(theClass.getSuperclass(), propertyName);
+        if (setter == null) {
+            Class<?>[] interfaces = theClass.getInterfaces();
+            for (int i = 0; setter == null && i < interfaces.length; i++) {
+                setter = getSetterOrNull(interfaces[i], propertyName);
+            }
+        }
+
+        return setter;
+    }
+
+
+    /* 原来的实现
     private static NestedSetter getSetterOrNull(Class<?> theClass, String propertyName) {
         if (theClass == Object.class || theClass == null || propertyName == null) {
             return null;
@@ -123,7 +177,7 @@ public final class NestedSetter {
         }
 
         return setter;
-    }
+    }*/
 
     private static Method setterMethod(Class<?> theClass, String propertyName) {
         Method getter = ReflectionUtils.getClassGetter(theClass, propertyName);

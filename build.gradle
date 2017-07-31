@@ -13,10 +13,10 @@ subprojects {
         testCompile 'junit:junit:4.12'
     }
 
-    task javadocJar(type: Jar) {
-        classifier = 'javadoc'
-        from javadoc
-    }
+//    task javadocJar(type: Jar) {
+//        classifier = 'javadoc'
+//        from javadoc
+//    }
 
     task sourcesJar(type: Jar) {
         classifier = 'sources'
@@ -24,7 +24,8 @@ subprojects {
     }
 
     artifacts {
-        archives javadocJar, sourcesJar
+//        archives javadocJar, sourcesJar
+        archives sourcesJar
     }
 }
 
@@ -32,7 +33,7 @@ project(':fluent-hibernate-core') {
     apply plugin: 'eclipse'
     apply plugin: 'maven'
     apply plugin: 'maven-publish'
-    apply plugin: 'signing'
+//    apply plugin: 'signing'
 
     group = "com.github.v-ladynev"
     version = "0.3.1"
@@ -49,14 +50,14 @@ project(':fluent-hibernate-core') {
         testCompile 'com.google.guava:guava:19.0'
     }
 
-    signing {
-        sign configurations.archives
-    }
+//    signing {
+//        sign configurations.archives
+//    }
 
     uploadArchives {
         repositories {
             mavenDeployer {
-                beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
+//                beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
 
                 repository(url: "https://oss.sonatype.org/service/local/staging/deploy/maven2/") {
                     authentication(userName: ossrhUsername, password: ossrhPassword)

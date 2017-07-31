@@ -28,7 +28,13 @@ public class FluentHibernateResultTransformer extends BasicTransformerAdapter {
         Object result = ClassUtils.newInstance(resultClass);
 
         for (int i = 0; i < aliases.length; i++) {
-            setters[i].set(result, tuple[i]);
+            if(setters[i] != null) {
+                setters[i].set(result, tuple[i]);
+            } else {
+                //如果该属性对应的setter方法为null，则忽略该属性
+                System.out.println("setter " + aliases[i] + " is null!!!");
+            }
+
         }
 
         return result;
@@ -40,11 +46,25 @@ public class FluentHibernateResultTransformer extends BasicTransformerAdapter {
         }
     }
 
+    /**
+     *
+     * @param resultClass
+     * @param aliases 数据库查询的字段
+     * @return
+     */
     private static NestedSetter[] createSetters(Class<?> resultClass, String[] aliases) {
         NestedSetter[] result = new NestedSetter[aliases.length];
 
         for (int i = 0; i < aliases.length; i++) {
-            result[i] = NestedSetter.create(resultClass, aliases[i]);
+            NestedSetter tmpSetter = NestedSetter.create(resultClass, aliases[i]);
+            //如果数据库查询的字段在POJO中没有直接跳过
+            if(tmpSetter != null) {
+
+                result[i] = tmpSetter;
+            } else {
+                System.out.println("Can't find property" + aliases[i]);
+            }
+
         }
 
         return result;
